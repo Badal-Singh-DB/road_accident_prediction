@@ -1,1 +1,56 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
+# Load the datasets with specified encoding and low_memory=False
+accident_data = pd.read_csv('C:/Users/badal/OneDrive/Documents/road_accident_prediction/data/Accident_Information.csv', encoding='latin1', low_memory=False)
+vehicle_data = pd.read_csv('C:/Users/badal/OneDrive/Documents/road_accident_prediction/data/Vehicle_Information.csv', encoding='latin1', low_memory=False)
+
+# Merge datasets
+merged_data = pd.merge(accident_data, vehicle_data, on='Accident_Index', how='inner')
+
+# Define feature columns and target column
+feature_columns = [
+    '1st_Road_Class', 'Number_of_Vehicles', 'Day_of_Week', 
+    'Light_Conditions', 'Weather_Conditions'
+]  # Replace with your chosen feature columns
+target_column = 'Accident_Severity'  # Replace with your actual target column
+
+# Prepare features and labels
+X = merged_data[feature_columns]
+y = merged_data[target_column]
+
+# Handle missing values (if necessary)
+X = X.dropna()# Merge datasets
+
+y = y[X.index]
+
+# Encode categorical features and labels if necessary
+label_encoder = LabelEncoder()
+for column in X.select_dtypes(include=['object']).columns:
+    X[column] = label_encoder.fit_transform(X[column])
+y = label_encoder.fit_transform(y)
+
+# Split data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Initialize and train the logistic regression model
+model = LogisticRegression(max_iter=1000)
+model.fit(X_train, y_train)
+
+# Make predictions on the test set
+y_pred = model.predict(X_test)
+
+# Calculate evaluation metrics
+accuracy = accuracy_score(y_test, y_pred)
+precision = precision_score(y_test, y_pred, average='weighted', zero_division=1)
+recall = recall_score(y_test, y_pred, average='weighted', zero_division=1)
+f1 = f1_score(y_test, y_pred, average='weighted', zero_division=1)
+
+# Display metrics
+print(f"Accuracy: {accuracy * 100:.2f}%")
+print(f"Precision: {precision * 100:.2f}%")
+print(f"Recall: {recall * 100:.2f}%")
+print(f"F1-score: {f1 * 100:.2f}%")
